@@ -1,0 +1,15 @@
+[Unit]
+Description=schulbewerbung.de Health Check Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/sb-healthcheck
+ExecStart=/opt/sb-healthcheck/sb-healthcheck
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
