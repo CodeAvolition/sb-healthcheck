@@ -10,6 +10,12 @@ use std::fs;
 
 #[tokio::main]
 async fn main() {
+  // Handle --version flag
+  let args: Vec<String> = std::env::args().collect();
+  if args.len() > 1 && args[1] == "--version" {
+    println!("v{}", env!("CARGO_PKG_VERSION"));
+    return;
+  }
   let config_str = fs::read_to_string("config.json")
     .expect("Failed to read config.json");
 
