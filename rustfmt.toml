@@ -1,0 +1,4 @@
+# Set overall line width
+max_width = 60
+chain_width = 60
+tab_spaces = 2
