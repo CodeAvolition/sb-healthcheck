@@ -1,8 +1,8 @@
 use crate::checker::run_check;
-use crate::models::{Check, CheckResult, Config};
+use crate::models::{CheckResult, Config};
 use dashmap::DashMap;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub type Cache = Arc<DashMap<String, CheckResult>>;
 
@@ -14,18 +14,18 @@ fn cache_key(env_name: &str, check_name: &str) -> String {
   format!("{}:{}", env_name, check_name)
 }
 
-pub async fn poll_all_checks(
-  config: &Config,
-  cache: Cache,
-) {
-  for env in &config.environments {
-    for check in &env.checks {
-      let key = cache_key(&env.name, &check.name);
-      let result = run_check(check).await;
-      cache.insert(key, result);
-    }
-  }
-}
+// pub async fn poll_all_checks(
+//   config: &Config,
+//   cache: Cache,
+// ) {
+//   for env in &config.environments {
+//     for check in &env.checks {
+//       let key = cache_key(&env.name, &check.name);
+//       let result = run_check(check).await;
+//       cache.insert(key, result);
+//     }
+//   }
+// }
 
 pub fn is_stale(
   result: &CheckResult,

@@ -68,6 +68,71 @@
       ]
     },
     {
+      "name": "test",
+      "checks": [
+        {
+          "name": "Admin Backend",
+          "url": "https://sb-admin-test.krz.de/api/health/full",
+          "check_type": "health"
+        },
+        {
+          "name": "Betriebe Backend",
+          "url": "https://betriebe.test.schulbewerbung.de/api/health/full",
+          "check_type": "health"
+        },
+        {
+          "name": "Kommunen Backend",
+          "url": "https://kommunen.test.schulbewerbung.de/api/health/full",
+          "check_type": "health"
+        },
+        {
+          "name": "Schüler Backend",
+          "url": "https://test.schulbewerbung.de/api/health/full",
+          "check_type": "health"
+        },
+        {
+          "name": "Schulen Backend",
+          "url": "https://schulen.test.schulbewerbung.de/api/health/full",
+          "check_type": "health"
+        },
+        {
+          "name": "Public Backend",
+          "url": "https://public.test.schulbewerbung.de/api/health/full",
+          "check_type": "health"
+        },
+        {
+          "name": "Admin Frontend",
+          "url": "https://sb-admin-test.krz.de/",
+          "check_type": "keyword",
+          "keyword": "<title>Admin - schulbewerbung.de</title>"
+        },
+        {
+          "name": "Betriebe Frontend",
+          "url": "https://betriebe.test.schulbewerbung.de/",
+          "check_type": "keyword",
+          "keyword": "<title>Betriebe - schulbewerbung.de</title>"
+        },
+        {
+          "name": "Kommunen Frontend",
+          "url": "https://kommunen.test.schulbewerbung.de/",
+          "check_type": "keyword",
+          "keyword": "<title>Kommunen - schulbewerbung.de</title>"
+        },
+        {
+          "name": "Schüler Frontend",
+          "url": "https://test.schulbewerbung.de/",
+          "check_type": "keyword",
+          "keyword": "<title>schulbewerbung.de</title>"
+        },
+        {
+          "name": "Schulen Frontend",
+          "url": "https://schulen.test.schulbewerbung.de/",
+          "check_type": "keyword",
+          "keyword": "<title>Schulen - schulbewerbung.de</title>"
+        }
+      ]
+    },
+    {
       "name": "demo",
       "checks": [
         {
@@ -170,71 +235,6 @@
         {
           "name": "Schulen Frontend",
           "url": "https://schulen.archiv.schulbewerbung.de/",
-          "check_type": "keyword",
-          "keyword": "<title>Schulen - schulbewerbung.de</title>"
-        }
-      ]
-    },
-    {
-      "name": "test",
-      "checks": [
-        {
-          "name": "Admin Backend",
-          "url": "https://sb-admin-test.krz.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Betriebe Backend",
-          "url": "https://betriebe.test.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Kommunen Backend",
-          "url": "https://kommunen.test.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Schüler Backend",
-          "url": "https://test.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Schulen Backend",
-          "url": "https://schulen.test.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Public Backend",
-          "url": "https://public.test.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Admin Frontend",
-          "url": "https://sb-admin-test.krz.de/",
-          "check_type": "keyword",
-          "keyword": "<title>Admin - schulbewerbung.de</title>"
-        },
-        {
-          "name": "Betriebe Frontend",
-          "url": "https://betriebe.test.schulbewerbung.de/",
-          "check_type": "keyword",
-          "keyword": "<title>Betriebe - schulbewerbung.de</title>"
-        },
-        {
-          "name": "Kommunen Frontend",
-          "url": "https://kommunen.test.schulbewerbung.de/",
-          "check_type": "keyword",
-          "keyword": "<title>Kommunen - schulbewerbung.de</title>"
-        },
-        {
-          "name": "Schüler Frontend",
-          "url": "https://test.schulbewerbung.de/",
-          "check_type": "keyword",
-          "keyword": "<title>schulbewerbung.de</title>"
-        },
-        {
-          "name": "Schulen Frontend",
-          "url": "https://schulen.test.schulbewerbung.de/",
           "check_type": "keyword",
           "keyword": "<title>Schulen - schulbewerbung.de</title>"
         }
