@@ -5,11 +5,24 @@ REPO="CodeAvolition/sb-healthcheck"
 INSTALL_DIR="/opt/sb-healthcheck"
 BINARY="sb-healthcheck"
 LOG_FILE="/var/log/sb-healthcheck-updates.log"
+SCRIPT_URL="https://raw.githubusercontent.com/$REPO/main/update.sh"
 
 # Function to log with timestamp
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | sudo tee -a "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
+
+# Self-update check
+TEMP_SCRIPT="/tmp/update.sh.new"
+curl -s -o "$TEMP_SCRIPT" "$SCRIPT_URL"
+if ! cmp -s "$0" "$TEMP_SCRIPT"; then
+    log "Update script has changed, updating self..."
+    cp "$TEMP_SCRIPT" "$0"
+    chmod +x "$0"
+    log "Script updated, re-executing..."
+    exec "$0" "$@"
+fi
+rm -f "$TEMP_SCRIPT"
 
 # Get current version if binary exists
 CURRENT_VERSION="none"
