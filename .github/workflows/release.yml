@@ -1,4 +1,4 @@
-name: Build and Release
+name: Release
 
 on:
   push:
@@ -12,10 +12,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Extract version from tag and update Cargo.toml
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          sed -i "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
 
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
