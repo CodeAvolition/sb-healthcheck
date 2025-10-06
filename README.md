@@ -1,120 +1,201 @@
-# schulbewerbung.de health dashboard
-- im building a health dashboard like the one we had previously vibe-coded, but i want to overengineer it and put it on a physical device, which i can set up in the office.
+# schulbewerbung.de Health Dashboard Documentation
 
-## The Setup:
-- raspberry pi zero w v1.1
-- framework 13 original screen
-- tbd.
+## Table of Contents
 
-## Documentation
-### The raspberry pi zero w v1.1 (PiZW)
-- Identify SD card
-run `lsblk`
-- Unmount if auto-mounted
-`sudo umount /run/media/codea/boot`
-- Verify unmounted
-`lsblk | grep sda`
-- install and use rpi-imager
-`sudo dnf install rpi-imager`
-`rpi-imager`
-- choose device, os and Storage
-Device: raspberry pi zero w v1.1
-Os: Raspberry Pi OS Lite (32-bit)
-Storage: sda (whatever it was called in the imager)
-- when clicking next i get to choose custom optionssystemctl status avahi-daemon
-- we want to do those so ssh etc. works from the get go
+1. [Overview](#overview)
+2. [Hardware Setup](#hardware-setup)
+3. [Initial Configuration](#initial-configuration)
+4. [Architecture & Development](#architecture--development)
+5. [Deployment Process](#deployment-process)
+6. [Automation & Maintenance](#automation--maintenance)
+7. [Network Configuration](#network-configuration)
+8. [Troubleshooting](#troubleshooting)
+9. [Security](#security)
 
-| Key             | Value          |
-| --------------- | -------------- |
-| Hostname        | sb-healthcheck |
-| Username        | sb-dev         |
-| Password        | 123QWEasd!     |
-| WiFi-SSID       | FTTH-A0AC      |
-| WiFi-Password   | 7EDG65d4       |
-| WiFi-Country    | NL             |
-| Time zone       | Europe/Berlin  |
-| Keyboard-Layout | de             | 
-
-- Service Settings:
-
-| Key            | Value                                                          | 
-| -------------- | -------------------------------------------------------------- |
-| SSH            | Enabled                                                        |
-| Authentication | Password (will add SSH keys after first successful connection) |
-
-Start with working baseline, layer in security after verification
-
-
-#### Network Discovery
-- Method: mDNS via Avahi
-- Hostname: sb-healthcheck.local
-- SSH command: `ssh sb-dev@sb-healthcheck.local`
-- said yes to allow the connection
-- reconnected after the fingerprint was saved and the first connection was closed
-
-#### First successful SSH connection
-- Date: 2025-10-04
-- IP assigned by router: 192.168.1.55
-- SSH fingerprint: SHA256:Q01DJFaAYhE12rq2YpBqqmDO9/xQid4M5p1PJUIxswM
-- Command: `ssh sb-dev@sb-healthcheck.local`
-- Kernel: 6.12.47+rpt-rpi-v6 (ARMv6l)
-
-#### Dashboard in Rust
-- Backend task that polls all the healthchecks and caches it.
-- axum server that serves a static html page that dispays that cached data
-
-### sb-healthcheck Deployment Process
+---
 
 ## Overview
-Health check dashboard for schulbewerbung.de deployments. Runs on Raspberry Pi Zero W, built via GitHub Actions.
 
-## Architecture
-- **Backend**: Rust (axum web server)
-- **Frontend**: Minimal HTML/CSS with auto-refresh
-- **Deployment**: GitHub Actions cross-compiles for ARM, Pi pulls binary from releases
+### What
+A physical health check dashboard for schulbewerbung.de deployments, running on a Raspberry Pi Zero W with a Framework 13 screen.
 
-## Local Development
+### Why
+- Visual monitoring of production services
+- Physical presence in office for team awareness
+- Learning exercise in embedded deployment and automation
+- Over-engineered for fun and educational value
 
-### Running locally
+### Key Features
+- Auto-updates every 30 minutes
+- Self-healing update mechanism
+- Version-synced releases
+- Accessible via mDNS (no IP needed)
+- Port 80 redirect for clean URLs
+
+---
+
+## Hardware Setup
+
+### Components
+- **Raspberry Pi Zero W v1.1** (ARMv6l)
+- **Framework 13 original screen** (TBD integration)
+- **SD Card** (identified as `sda` in examples)
+
+### Why This Hardware
+- **Pi Zero W**: Low power, WiFi built-in, sufficient for dashboard
+- **Framework screen**: Reusing existing hardware, good resolution for office display
+
+---
+
+## Initial Configuration
+
+### SD Card Preparation
+
+**What:** Flash Raspberry Pi OS Lite to SD card
+
+**Why:** Headless setup with minimal overhead for dashboard-only device
+
+**Steps:**
+
+1. **Identify SD card**
+   ```bash
+   lsblk
+   ```
+
+2. **Unmount if auto-mounted**
+   ```bash
+   sudo umount /run/media/codea/boot
+   ```
+
+3. **Verify unmounted**
+   ```bash
+   lsblk | grep sda
+   ```
+
+4. **Install and launch imager**
+   ```bash
+   sudo dnf install rpi-imager
+   rpi-imager
+   ```
+
+5. **Configure in imager**
+
+   | Setting | Value |
+   |---------|-------|
+   | Device | Raspberry Pi Zero W v1.1 |
+   | OS | Raspberry Pi OS Lite (32-bit) |
+   | Storage | sda (your SD card) |
+
+6. **Custom settings (enable SSH from start)**
+
+   | Key | Value |
+   |-----|-------|
+   | Hostname | sb-healthcheck |
+   | Username | sb-dev |
+   | Password | <sb-default-dev-pw> |
+   | WiFi SSID | <wifi-ssid> |
+   | WiFi Password | <wifi-password> |
+   | WiFi Country | NL TODO change to DE in GER |
+   | Time zone | Europe/Berlin |
+   | Keyboard Layout | de |
+   | SSH | Enabled |
+   | Authentication | Password |
+
+   **Why password first:** Start with working baseline, add SSH keys after verification
+
+### First Connection
+
+**Network Discovery:**
+- Method: mDNS via Avahi
+- Hostname: `sb-healthcheck.local`
+- Router IP: `192.168.1.55`
+
+**SSH Connection:**
+```bash
+ssh sb-dev@sb-healthcheck.local
+```
+---
+
+## Architecture & Development
+
+### What
+Rust application with background health checker and web dashboard.
+
+### Why Rust
+- Memory safety for long-running process
+- Excellent async support (tokio)
+- Single binary deployment
+- Cross-compilation to ARM
+- i was looking for a Reason to use it
+
+### Components
+
+**Backend:**
+- `src/main.rs` - Entry point, spawns poller and web server
+- `src/checker.rs` - Health check polling logic
+- `src/cache.rs` - Thread-safe result caching (DashMap)
+- `src/models/` - Data structures (config, health checks, status)
+
+**Frontend:**
+- `src/server.rs` - Axum web server and HTML dashboard
+- Auto-refresh every 5 seconds
+- Grid layout (environments → backends/frontends)
+- Compact design for 13" screen
+
+**Configuration:**
+- `config.json` - Deployment endpoints and check intervals
+- Not secret, included in repository
+
+### Local Development
+
 ```bash
 cargo run
-````
+```
 
 Access at `http://localhost:3000`
 
-### Project structure
+**Why local testing:** Verify changes before ARM compilation (Pi Zero too slow for native builds)
 
-- `src/main.rs` - Entry point, spawns poller and web server
-- `src/models/` - Data structures (config, health checks, status)
-- `src/checker.rs` - Health check polling logic
-- `src/cache.rs` - Thread-safe result caching with DashMap
-- `src/server.rs` - Axum web server and HTML dashboard
-- `config.json` - Deployment configuration
+---
 
-## Deployment Workflow
+## Deployment Process
 
-### Creating a new release
-```Bash
-# Make your changes 
-git add . 
-git commit -m Description of changes; 
-git push
-git tag v0.X.Y 
-git push origin v0.X.Y` # uses sem ver
+### What
+GitHub Actions cross-compiles for ARM, Pi pulls pre-built binaries.
+
+### Why This Approach
+- Pi Zero W too slow for Rust compilation
+- Automated builds ensure consistency
+- No manual file copying
+- Version control tied to releases
+
+### Creating a Release
+
+**Single command deployment:**
+```bash
+git tag v0.1.7
+git push origin v0.1.7
 ```
-### What happens automatically
+
+**What happens automatically:**
 1. GitHub Actions detects tag push
-2. Cross-compiles for ARM (arm-unknown-linux-gnueabihf)
-3. Creates GitHub release with binary attached
-4. Pi can pull latest release
+2. Extracts version from tag (strips 'v')
+3. Updates `Cargo.toml` with version during build
+4. Cross-compiles for ARM (`arm-unknown-linux-gnueabihf`)
+5. Creates GitHub release with binary attached
+6. Pi detects new version within 30 minutes
 
+**Why auto-version sync:**
+- Single source of truth (git tags)
+- No manual `Cargo.toml` editing
+- Prevents version mismatches
+- Simplifies release to one command
 
-- v0.1.3 went through after working on the github release pipeline "for a bit" 
+### Initial Pi Setup
 
+**One-time installation:**
 
-## Pi Setup (Complete)
-
-### Initial Installation
+```bash
 # Download setup files
 curl -O https://raw.githubusercontent.com/CodeAvolition/sb-healthcheck/main/update.sh
 curl -O https://raw.githubusercontent.com/CodeAvolition/sb-healthcheck/main/sb-healthcheck.service
@@ -125,367 +206,390 @@ chmod +x update.sh
 # Run first update (downloads binary)
 ./update.sh
 
-# Copy config.json to installation directory
+# Copy config to installation directory
 sudo cp config.json /opt/sb-healthcheck/
 
-# Install and start systemd service
+# Install systemd service
 sudo cp sb-healthcheck.service /etc/systemd/system/
-sudo nano /etc/systemd/system/sb-healthcheck.service  # Change User=pi to your username
+sudo nano /etc/systemd/system/sb-healthcheck.service  # Change User=pi to sb-dev
 sudo systemctl daemon-reload
 sudo systemctl enable sb-healthcheck
 sudo systemctl start sb-healthcheck
+```
 
-### Manual Updates
+**Why systemd:**
+- Auto-start on boot
+- Automatic restart on crashes
+- Centralized logging
+- Standard Linux service management
 
-Bash
+---
 
-`./update.sh`
+## Automation & Maintenance
 
-### Service Management
+### Auto-Update System
 
-Bash
+**What:** Pi checks for updates every 30 minutes, installs automatically.
 
-`# Start/stop/restart sudo systemctl start sb-healthcheck sudo systemctl stop sb-healthcheck sudo systemctl restart sb-healthcheck  # View logs sudo journalctl -u sb-healthcheck -n 50`
+**Why:** Zero-touch maintenance, always running latest code.
 
+#### Self-Updating Script
 
-## Accessible via:
-http://sb-healthcheck.local/
-much nicer than typing out the ip
+**Location:** `/home/sb-dev/update.sh`
 
+**What it does:**
+1. Downloads itself from GitHub
+2. Compares to local version
+3. Replaces itself if different
+4. Re-executes with new version
+5. Checks for binary updates
+6. Downloads and installs if newer
+7. Restarts service
 
-# Automation & Maintenance
+**Why self-update:** Allows improving the update process without manual intervention.
 
-This document explains the automated systems that keep the health check dashboard updated and running smoothly.
+#### Cron Job
 
-## Auto-Update System
+**Current schedule:**
+```
+*/30 * * * * cd /home/sb-dev && ./update.sh >> /var/log/sb-healthcheck-updates.log 2>&1
+```
 
-### Overview
-The Raspberry Pi automatically checks for and installs new versions every 30 minutes. This ensures the dashboard always runs the latest code without manual intervention.
+**Why 30 minutes:** Balance between staying current and not hammering GitHub API.
 
-### How It Works
-
-**1. Self-Updating Script (`update.sh`)**
-- Downloads itself from GitHub before checking for binary updates
-- **Why:** Allows us to improve the update process itself without manual intervention
-- Compares local script to remote version
-- If different, replaces itself and re-executes
-- **Location:** `/home/sb-dev/update.sh`
-
-**2. Binary Update Process**
-- Fetches latest release from GitHub API
-- Compares current version (from `--version` flag) with latest tag
-- Downloads new binary if versions differ
-- Installs to `/opt/sb-healthcheck/`
-- Restarts systemd service automatically
-- **Why restart:** Ensures new code runs immediately without manual service management
-
-**3. Cron Job Scheduler**
-- Runs `update.sh` every 30 minutes
-- Logs all activity to `/var/log/sb-healthcheck-updates.log`
-- **Why 30 minutes:** Balance between staying current and not hammering GitHub API
-
-### Managing the Cron Job
-
-**View current schedule:**
+**View schedule:**
+```bash
 crontab -l
+```
 
 **Edit schedule:**
+```bash
+crontab -e
+```
 
-Bash
+**Common alternatives:**
 
-`crontab -e`
-
-Current entry:
-
-Plaintext
-
-`*/30 * * * * cd /home/sb-dev &amp;&amp; ./update.sh &gt;&gt; /var/log/sb-healthcheck-updates.log 2&gt;&amp;1`
-
-**Cron syntax breakdown:**
-
-- `*/30` - Every 30 minutes
-- `* * * *` - Every hour, day, month, day-of-week
-- `cd /home/sb-dev` - Change to script directory (important for relative paths)
-- `./update.sh` - Run the update script
-- `>> /var/log/...` - Append output to log file
-- `2>&1` - Redirect errors to same log file
-
-**Common schedule changes:**
-
-Every hour:
-
-Plaintext
-
-`0 * * * * cd /home/sb-dev &amp;&amp; ./update.sh &gt;&gt; /var/log/sb-healthcheck-updates.log 2&gt;&amp;1`
-
-Every 15 minutes:
-
-Plaintext
-
-`*/15 * * * * cd /home/sb-dev &amp;&amp; ./update.sh &gt;&gt; /var/log/sb-healthcheck-updates.log 2&gt;&amp;1`
-
-Daily at 3 AM:
-
-Plaintext
-
-`0 3 * * * cd /home/sb-dev &amp;&amp; ./update.sh &gt;&gt; /var/log/sb-healthcheck-updates.log 2&gt;&amp;1`
+| Frequency | Cron Expression |
+|-----------|----------------|
+| Every 15 min | `*/15 * * * *` |
+| Every hour | `0 * * * *` |
+| Daily 3 AM | `0 3 * * *` |
 
 **Remove auto-update:**
+```bash
+crontab -r
+```
 
-Bash
+#### Manual Update
 
-`crontab -r  # Removes all cron jobs for current user`
+**Force immediate check:**
+```bash
+cd /home/sb-dev
+./update.sh
+```
 
-### Manual Update
+**Why manual updates:**
+- Test new releases immediately
+- Troubleshoot update issues
+- Verify cron behavior
 
-Force an update check immediately:
+### Version Management
 
-Bash
+**Check current version:**
+```bash
+/opt/sb-healthcheck/sb-healthcheck --version
+```
 
-`cd /home/sb-dev ./update.sh`
+**View version history:**
+```bash
+tail -20 /var/log/sb-healthcheck-updates.log
+```
 
-**Why manual updates are useful:**
+**GitHub releases:**
+- Latest: https://github.com/CodeAvolition/sb-healthcheck/releases/latest
+- All tags: https://github.com/CodeAvolition/sb-healthcheck/tags
 
-- Testing new releases immediately
-- Troubleshooting update issues
-- Verifying cron job behavior
-
-## Version Management
-
-### Auto-Versioning in CI/CD
-
-**How versions are determined:**
-
-1. Developer creates git tag: `git tag v0.1.7`
-2. GitHub Actions workflow triggers on tag push
-3. Workflow extracts version from tag (strips 'v' prefix)
-4. `sed` command updates `Cargo.toml` during build
-5. Binary is compiled with correct version embedded
-6. Release is created with tag name
-
-**Why this approach:**
-
-- Single source of truth: git tags
-- No manual `Cargo.toml` editing needed
-- Prevents version mismatch between tag and binary
-- Simplifies release process to one command
-
-### Creating a New Release
-
-Bash
-
-`# Create and push tag (triggers build automatically) git tag v0.1.7 git push origin v0.1.7`
-
-**What happens next:**
-
-1. GitHub Actions starts build (~3-5 minutes)
-2. ARM binary is cross-compiled
-3. Release is created with binary attached
-4. Next cron run (within 30 min) detects and installs it
-
-### Version Detection
-
-The `--version` flag reads from `CARGO_PKG_VERSION`, which comes from `Cargo.toml`:
-
-Bash
-
-`/opt/sb-healthcheck/sb-healthcheck --version # Output: v0.1.7`
-
-**Why version detection matters:**
-
-- Update script compares versions to avoid unnecessary restarts
-- Logs show version history for troubleshooting
+**Why version tracking:**
 - Confirms successful updates
+- Troubleshooting aid
+- Prevents unnecessary restarts
 
-### Checking Current Version
+### Log Management
 
-**On the Pi:**
-
-Bash
-
-`/opt/sb-healthcheck/sb-healthcheck --version`
-
-**In logs:**
-
-Bash
-
-`tail -20 /var/log/sb-healthcheck-updates.log`
-
-**On GitHub:**
-
-- Check latest release: https://github.com/CodeAvolition/sb-healthcheck/releases/latest
-- View all tags: https://github.com/CodeAvolition/sb-healthcheck/tags
-
-## Log Management
-
-### Update Logs
+#### Update Logs
 
 **Location:** `/var/log/sb-healthcheck-updates.log`
 
 **What's logged:**
-
-- Update check start/finish timestamps
-- Current and available versions
+- Update check timestamps
+- Current vs available versions
 - Download progress
 - Installation success/failure
 - Service restart confirmation
 - Script self-update events
 
-**View recent activity:**
+**View logs:**
+```bash
+tail -f /var/log/sb-healthcheck-updates.log  # Follow live
+tail -50 /var/log/sb-healthcheck-updates.log  # Last 50 lines
+```
 
-Bash
+**Rotation:**
+- Keeps 2 days of history
+- **Why 2 days:** Sufficient for troubleshooting without filling disk
+- Automatic cleanup before each update
 
-`tail -f /var/log/sb-healthcheck-updates.log  # Follow live tail -50 /var/log/sb-healthcheck-updates.log  # Last 50 lines`
+**Manual cleanup:**
+```bash
+sudo truncate -s 0 /var/log/sb-healthcheck-updates.log
+```
 
-**Log rotation:**
-
-- Keeps only 2 days of history
-- **Why 2 days:** Enough for troubleshooting recent issues without filling disk
-- Configured in `update.sh` via `find` command
-- Runs before each update check
-
-**Manual log cleanup:**
-
-Bash
-
-`# Clear all update logs sudo truncate -s 0 /var/log/sb-healthcheck-updates.log  # Or remove entirely (will be recreated) sudo rm /var/log/sb-healthcheck-updates.log`
-
-### Application Logs
+#### Application Logs
 
 **Location:** `/var/log/sb-healthcheck.log`
 
 **What's logged:**
-
 - Application startup with version
 - Health check results
 - HTTP server events
 - Errors and warnings
 
 **View logs:**
+```bash
+tail -f /var/log/sb-healthcheck.log  # Follow live
+journalctl -u sb-healthcheck -f     # Via systemd
+```
 
-Bash
+### Service Management
 
-`tail -f /var/log/sb-healthcheck.log  # Follow live journalctl -u sb-healthcheck -f     # Via systemd`
+```bash
+# Start/stop/restart
+sudo systemctl start sb-healthcheck
+sudo systemctl stop sb-healthcheck
+sudo systemctl restart sb-healthcheck
+
+# View status
+sudo systemctl status sb-healthcheck
+
+# View logs
+journalctl -u sb-healthcheck -n 50
+```
+
+---
+
+## Network Configuration
+
+### Access URLs
+
+**Primary (mDNS):**
+```
+http://sb-healthcheck.local/
+```
+
+**IP-based:**
+```
+http://192.168.1.55/
+```
+
+**Why mDNS:** No need to remember IP, works across network changes.
+
+### Port 80 Redirect
+
+**What:** Redirects port 80 → 3000 for clean URLs.
+
+**Why:** Standard HTTP port, no `:3000` needed.
+
+**Setup (already configured):**
+```bash
+# Add redirect rule
+sudo nft add table ip nat
+sudo nft add chain ip nat prerouting { type nat hook prerouting priority 0 \; }
+sudo nft add rule ip nat prerouting tcp dport 80 redirect to :3000
+
+# Make persistent
+sudo nft list ruleset | sudo tee /etc/nftables.conf
+sudo systemctl enable nftables
+sudo systemctl start nftables
+```
+
+**Why nftables:** Modern replacement for iptables on Raspberry Pi OS.
+
+### WiFi Reconfiguration
+
+**When:** Moving Pi to different network (e.g., home → office).
+
+**Steps:**
+
+1. Insert SD card into laptop
+2. Wait for auto-mount
+3. Navigate to boot partition
+   ```bash
+   cd /run/media/codea/bootfs
+   ```
+4. Check for config file
+   ```bash
+   ls -la firstrun.sh
+   ```
+5. Edit WiFi settings
+   ```bash
+   sudo nano firstrun.sh
+   ```
+6. Find WiFi section, update SSID and password
+7. Save and exit (Ctrl+X, Y, Enter)
+8. Unmount safely
+   ```bash
+   sudo umount /run/media/codea/bootfs
+   ```
+9. Insert SD card into Pi and boot
+
+**Why firstrun.sh:** Modern Raspberry Pi OS uses this for initial config. If missing, look for `wpa_supplicant.conf` instead.
+
+---
 
 ## Troubleshooting
 
 ### Update Not Happening
 
-**Check cron job exists:**
+**Check cron job:**
+```bash
+crontab -l
+```
 
-Bash
+**Check cron service:**
+```bash
+sudo systemctl status cron
+```
 
-`crontab -l`
+**Check logs:**
+```bash
+tail -50 /var/log/sb-healthcheck-updates.log
+```
 
-**Check cron service running:**
-
-Bash
-
-`sudo systemctl status cron`
-
-**Check update logs:**
-
-Bash
-
-`tail -50 /var/log/sb-healthcheck-updates.log`
-
-**Test update manually:**
-
-Bash
-
-`cd /home/sb-dev ./update.sh`
+**Test manually:**
+```bash
+cd /home/sb-dev
+./update.sh
+```
 
 ### Wrong Version Showing
 
 **Verify binary version:**
+```bash
+/opt/sb-healthcheck/sb-healthcheck --version
+```
 
-Bash
-
-`/opt/sb-healthcheck/sb-healthcheck --version`
-
-**Check if service restarted:**
-
-Bash
-
-`sudo systemctl status sb-healthcheck # Look for recent restart timestamp`
+**Check service restart:**
+```bash
+sudo systemctl status sb-healthcheck
+```
 
 **Force restart:**
-
-Bash
-
-`sudo systemctl restart sb-healthcheck`
+```bash
+sudo systemctl restart sb-healthcheck
+```
 
 ### Script Not Self-Updating
 
-**Check script permissions:**
+**Check permissions:**
+```bash
+ls -la /home/sb-dev/update.sh
+# Should show: -rwxr-xr-x
+```
 
-Bash
-
-`ls -la /home/sb-dev/update.sh # Should be executable: -rwxr-xr-x`
-
-**Manually update script:**
-
-Bash
-
-`cd /home/sb-dev curl -O https://raw.githubusercontent.com/CodeAvolition/sb-healthcheck/main/update.sh chmod +x update.sh`
+**Manual script update:**
+```bash
+cd /home/sb-dev
+curl -O https://raw.githubusercontent.com/CodeAvolition/sb-healthcheck/main/update.sh
+chmod +x update.sh
+```
 
 ### GitHub API Rate Limiting
 
-**Symptom:** Updates fail with API errors
+**Symptom:** Updates fail with API errors.
 
 **Check rate limit:**
+```bash
+curl -s https://api.github.com/rate_limit
+```
 
-Bash
+**Why it happens:** GitHub limits unauthenticated API calls to 60/hour per IP.
 
-`curl -s https://api.github.com/rate_limit`
+**Solution:** Public releases API has higher limits. If issues persist, add GitHub token to script.
 
-**Why it happens:** GitHub limits unauthenticated API calls to 60/hour per IP
+---
 
-**Solution:** Updates use public releases API which has higher limits. If issues persist, consider adding GitHub token to script.
+## Security
 
-## Security Considerations
+### Permissions Model
 
-### Why sudo is needed
-
+**Why sudo is needed:**
 - Binary installation to `/opt/` requires root
 - Service restart requires root
 - Log file writing to `/var/log/` requires root
 
-### Permissions
-
-- Update script: Owned by `sb-dev`, executable
-- Binary: Owned by root, executable by all
+**File ownership:**
+- Update script: `sb-dev`, executable
+- Binary: `root`, executable by all
 - Log files: Writable by `sb-dev`
 
-### Network security
+### Network Security
 
 - Downloads only from official GitHub releases
 - HTTPS enforced for all downloads
 - No external dependencies beyond GitHub
+- Public repository (no secrets in code)
 
-## Related Documentation
+### Authentication
 
-- [Deployment Guide](https://kagi.com/assistant/deployment.md) - Initial setup
-- [Development Guide](https://kagi.com/assistant/development.md) - Building and testing
-- [Architecture](https://kagi.com/assistant/architecture.md) - System design
+**Current:** Password-based SSH
 
-# How to connect to the PiZW once im back home:
-#### Reconfigure WiFi for different network
+**Future:** Add SSH key authentication after initial verification
 
-Steps to change WiFi before first boot on new network:
-1. Insert SD card into laptop
-2. Wait for partitions to auto-mount
-3. Navigate to boot partition
-   `cd /run/media/codea/bootfs`
-4. Check if firstrun.sh exists
-   `ls -la firstrun.sh`
-5. Edit the file
-   `sudo nano firstrun.sh`
-6. Find the WiFi section (search for SSID)
-7. Replace SSID and password with home network credentials
-8. Save and exit (Ctrl+X, Y, Enter)
-9. Unmount safely
-   `sudo umount /run/media/codea/bootfs`
-10. Insert SD card into Pi and boot
+**Why password first:** Ensures working baseline before layering security.
 
-Note: Modern Raspberry Pi OS uses firstrun.sh for initial config. If file doesn't exist, look for wpa_supplicant.conf in boot partition instead.
+---
+
+## Quick Reference
+
+### Common Commands
+
+```bash
+# Check dashboard status
+sudo systemctl status sb-healthcheck
+
+# View live logs
+tail -f /var/log/sb-healthcheck.log
+
+# Force update
+cd /home/sb-dev && ./update.sh
+
+# Check version
+/opt/sb-healthcheck/sb-healthcheck --version
+
+# Restart service
+sudo systemctl restart sb-healthcheck
+
+# View cron jobs
+crontab -l
+```
+
+### Important Paths
+
+| Path | Purpose |
+|------|---------|
+| `/opt/sb-healthcheck/` | Binary installation directory |
+| `/home/sb-dev/update.sh` | Self-updating update script |
+| `/var/log/sb-healthcheck.log` | Application logs |
+| `/var/log/sb-healthcheck-updates.log` | Update logs |
+| `/etc/systemd/system/sb-healthcheck.service` | Service definition |
+
+### Network Details
+
+| Item | Value |
+|------|-------|
+| Hostname | sb-healthcheck |
+| mDNS | sb-healthcheck.local |
+| IP Address | 192.168.1.55 |
+| HTTP Port | 80 (redirects to 3000) |
+| SSH User | sb-dev |
+
