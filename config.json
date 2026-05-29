@@ -31,6 +31,11 @@
           "check_type": "health"
         },
         {
+          "name": "Failing Backend",
+          "url": "https://failing.schulbewerbung.de/api/health/full",
+          "check_type": "health"
+        },
+        {
           "name": "Public Backend",
           "url": "https://public.schulbewerbung.de/api/health/full",
           "check_type": "health"
@@ -192,49 +197,6 @@
         {
           "name": "Schulen Frontend",
           "url": "https://schulen.demo.schulbewerbung.de/",
-          "check_type": "keyword",
-          "keyword": "<title>Schulen - schulbewerbung.de</title>"
-        }
-      ]
-    },
-    {
-      "name": "archiv",
-      "checks": [
-        {
-          "name": "Admin Backend",
-          "url": "https://sb-admin-archiv.krz.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Kommunen Backend",
-          "url": "https://kommunen.archiv.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Schulen Backend",
-          "url": "https://schulen.archiv.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Public Backend",
-          "url": "https://public.archiv.schulbewerbung.de/api/health/full",
-          "check_type": "health"
-        },
-        {
-          "name": "Admin Frontend",
-          "url": "https://sb-admin-archiv.krz.de/",
-          "check_type": "keyword",
-          "keyword": "<title>Admin - schulbewerbung.de</title>"
-        },
-        {
-          "name": "Kommunen Frontend",
-          "url": "https://kommunen.archiv.schulbewerbung.de/",
-          "check_type": "keyword",
-          "keyword": "<title>Kommunen - schulbewerbung.de</title>"
-        },
-        {
-          "name": "Schulen Frontend",
-          "url": "https://schulen.archiv.schulbewerbung.de/",
           "check_type": "keyword",
           "keyword": "<title>Schulen - schulbewerbung.de</title>"
         }

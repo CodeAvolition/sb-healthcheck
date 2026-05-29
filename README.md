@@ -1,3 +1,11 @@
+# sb-healthcheck
+
+> **⚠️ This project is obsolete.**
+
+I'm moving on to [homelab](https://github.com/CodeAvolition/homelab) — it's closer to OCC and, with an upcoming move, it'll be nice to have.
+
+This repository is archived for now.
+
 # schulbewerbung.de Health Dashboard Documentation
 
 ## Table of Contents
